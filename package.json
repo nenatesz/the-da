@@ -5,9 +5,9 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon",
-    "start": "node build/index.js",
+    "start": "node ./build/index.js",
     "postinstall": "tsc",
-    "watch-node": "nodemon build/index.js",
+    "watch-node": "nodemon ./build/index.js",
     "watch-ts": "tsc -w",
     "deploy": "git add . && git commit -m Heroku && git push heroku main"
   },
