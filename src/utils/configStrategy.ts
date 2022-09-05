@@ -1,15 +1,19 @@
 import { Request, Response, NextFunction } from "express";
-import passport from "passport";
-import LocalStrategy from "passport-local";
-import passportCustom from "passport-custom";
-import bcrypt from "bcrypt";
-import JwtStrategy, { StrategyOptions } from "passport-jwt";
-import ExtractJwt from "passport-jwt";
-import UserModel from "../models/user.model";
+import passport from 'passport';
+import LocalStrategy from 'passport-local';
+import passportCustom from 'passport-custom';
+import linkedInStrategy, {StrategyOption, StrategyOptionWithRequest} from 'passport-linkedin-oauth2';
+import bcrypt from 'bcrypt';
+import JwtStrategy, { StrategyOptions } from 'passport-jwt';
+import ExtractJwt from 'passport-jwt';
+import UserModel, { IUserDocument } from '../models/user.model';
 import config from "../config";
+import { constants } from 'buffer';
+import handler from "./handlers";
 
 
 const CustomStrategy = passportCustom.Strategy;
+const LinkedInStrategy = linkedInStrategy.Strategy;
 
 // CONFIGURE  ALL STRATEGIES
 
@@ -19,13 +23,9 @@ passport.use("register", new CustomStrategy(
         try{
             console.log('req', req.body)
             const {
-                email,
+                email, 
                 password,
-                username,
-                gender,
-                sexuality,
-                dob,
-                occupation,  
+                username,  
                 role              
             } = req.body;
             
@@ -33,10 +33,6 @@ passport.use("register", new CustomStrategy(
                 email,
                 password: bcrypt.hashSync(password, 10),
                 username,
-                gender,
-                sexuality,
-                dob,
-                occupation,
                 role
             }, (err, user) => {
                 if (err) {
@@ -46,7 +42,7 @@ passport.use("register", new CustomStrategy(
                 return done(null, user);
             })
         }catch(error){
-            console.log(error);
+            console.log('errorrrr', error);
             return done(error, null)
         }
 }));
@@ -60,15 +56,15 @@ passport.use("login", new LocalStrategy.Strategy({
 },
     async (req, email, password, done) => {
         try{
-            // const {email, password} = req.body
             console.log(email, password);
-            let user = await UserModel.findOne({email});
+            let user: IUserDocument | null = await UserModel.findOne({email});
             console.log('email', email);
+
             if(!user){
-                return done(false, null, { message: "Invalid Login Details" });
+             return done(false, null, { message: "Invalid Login Details" });
             }
 
-            const isValidPassword = await bcrypt.compare(password, user.password);
+            const isValidPassword = await bcrypt.compare(password, <string>user.password);
     
             if(!isValidPassword){
                 return done(false, null, { message: "Invalid Login Details" });
@@ -77,42 +73,117 @@ passport.use("login", new LocalStrategy.Strategy({
             
             console.log(user);
             return done(null, user);
-        }catch(error){
+        
+        } catch (error){
             console.log(error);
             return done(error, null)
         }       
     }
 ));
 
+// const cookieExtractor = function(req: Request) {
+//     console.log('acess-TOKEN!!!')
+//     let token = null;
+//     if (req && req.cookies)
+//     {
+//         token = req.cookies['jwt'];
+//         console.log('token!', token)
+//     }
+//     return token;
+// };
 
 // JWT STRATEGY TO VERIFY TOKEN SENT BY REQUESTS
-const opts: StrategyOptions = {
-    jwtFromRequest: ExtractJwt.ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: config.jwt_secret
+const jwtOpts: StrategyOptions = {
+    // jwtFromRequest: ExtractJwt.ExtractJwt.fromAuthHeaderAsBearerToken(),
+    jwtFromRequest: ExtractJwt.ExtractJwt.fromExtractors([ExtractJwt.ExtractJwt.fromAuthHeaderAsBearerToken(), handler.cookieExtractor]),
+    // jwtFromRequest: cookieExtractor,
+    secretOrKey: config.jwt_secret,
 };
 // token in this callback function is the decoded jwt token
-passport.use(new JwtStrategy.Strategy(opts, async (token, done) => {
+passport.use(new JwtStrategy.Strategy(jwtOpts, async (token, done) => {
     try{
-        const {id, email} = token;
-        console.log('token', token.iat);
-        const iat = (token.iat).toString();
-        console.log('stringToken', iat);
-
-        const user = await UserModel.findOne({email, iat});
-        if(!user){
-            return done(null, false, {errors: {message: "User Not Authorized"}});
+        if(token) {
+            console.log('token', token)
+            const {id, email, role, username} = token;
+            console.log('token', token.iat);
+            const iat: string = (token.iat).toString();
+            console.log('stringToken', iat);
+    
+            const user: IUserDocument |  null = await UserModel.findOne({email, username});
+            if(!user){
+                return done(null, false, {errors: {message: "User Not Authorized"}});
+            }
+            // try {
+            console.log('user', user)
+            return done(null, user);
+            //   } catch (error) {
+                // done(error);
+            //   }
+            
         }
-        // try {
-        console.log(user)
-        return done(null, user);
-        //   } catch (error) {
-            // done(error);
-        //   }
     }catch(error){
         console.log(error);
         return done(error, null);
     }
 }));
 
-// STRATEGY TO AUTHENTICATE USER WITH LINKEDIN
 
+// STRATEGY TO AUTHENTICATE USER WITH LINKEDIN
+const linkedinOpts: StrategyOptionWithRequest = {
+    clientID: config.linkedInClientId,
+    clientSecret: config.linkedInClientSecret,
+    callbackURL: 'http://localhost:5050/auth/linkedin/callback',
+    scope: ['r_emailaddress', 'r_liteprofile'],
+    passReqToCallback: true
+}
+
+passport.use(new LinkedInStrategy(linkedinOpts, (req: Request, accessToken, refreshToken, profile, done) => {
+    // (req: Request) => {
+        process.nextTick(() => {
+            try {
+                console.log('accessToken', accessToken)
+                if (!profile?.emails[0].value){
+                    done(null, false, 'LinkedIn Account is not registered with email. Please sign in using other methods');
+                }
+                    console.log('profile.emails', profile.emails)
+                    console.log('profile', profile);
+                    UserModel.findOne({email: profile.emails[0].value}, (err: any, user: IUserDocument | null) => {
+                        if(err){
+                            console.log('An error occured', err)
+                        }
+                        if (user?.email || user?.providerUserId) {
+                            // return done (null, false, 'User Already Exists Please Login')
+                            console.log('hasEmail and Username')
+                            try {
+                                return done(null, user)
+                            }catch(err){
+                                console.log(err)
+                            }
+                        } else {
+                            console.log('has No Email')
+                            UserModel.create({
+                                email: profile.emails[0].value,
+                                fullname: profile.name.givenName + ' ' + profile.name.familyName,
+                                provider: 'linkedin',
+                                providerUserId: profile.id,
+                                providerImageUrl: profile.photos[0].value
+                            },
+                                (err, user) => {
+                                    if(err){
+                                        return done(err, null)
+                                    }
+                                    console.log('here', user);
+                                    return done(null, user)
+                                })                              
+                        }                          
+                    })  
+                    // return done(null, profile)
+            }catch(error) {
+                console.log('error', error)
+                return done(error, null, 'Authentication failed')
+            }
+     })
+
+    // }
+    
+}))

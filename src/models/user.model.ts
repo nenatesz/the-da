@@ -1,3 +1,4 @@
+import { kStringMaxLength } from "buffer";
 import mongoose, {Model, Document, model, Schema} from "mongoose";
 
 enum Role {
@@ -6,14 +7,20 @@ enum Role {
 
 };
 
+enum Provider {
+    linkedin = 'linkedin',
+    email = 'email'
+}
+
 export interface IUserDocument extends Document {
+    fullname?: string;
     email: string;
-    password: string;
+    password?: string;
     username: string;
-    gender: string;
-    sexuality: string;
-    dob: Date;
-    occupation: string;
+    gender?: string;
+    sexuality?: string;
+    dob?: Date;
+    occupation?: string;
     quote?: string;
     profile_picture?: string;
     profile_video?: string;
@@ -26,7 +33,11 @@ export interface IUserDocument extends Document {
     verifiedDate?: Date;
     role: Role;
     iat?: string;
-    
+    passwordResetToken?: string;
+    resetPasswordExpires?: Date;
+    provider?: Provider;
+    providerUserId?: string;
+    providerImageUrl?: string;
 
 };
 
@@ -39,13 +50,14 @@ export interface IUserModel extends Model<IUserDocument> {
 };
 
 const userSchema = new Schema<IUserDocument>({
+    fullname: {type: String},
     email: {type: String, required: true, unique: true},
-    password: {type: String, required: true},
-    username: {type: String, required: true, unique: true},
-    gender: {type: String, required: true},
-    sexuality: {type: String, required: true},
-    dob: {type: Date, required: true},
-    occupation: {type: String, required: true},
+    password: {type: String},
+    username: {type: String, unique: true},
+    gender: {type: String},
+    sexuality: {type: String},
+    dob: {type: Date},
+    occupation: {type: String},
     quote: {type: String},
     profile_picture: {type: String},
     profile_video: {type: String},
@@ -57,7 +69,12 @@ const userSchema = new Schema<IUserDocument>({
     verified: {type: Boolean, required: true, default: false},
     verifiedDate: {type: Date},
     role: {type: String, enum: Role, required: true, default: Role.customer},
-    iat: {type: String}
+    iat: {type: String},
+    passwordResetToken: {type: String},
+    resetPasswordExpires: {type: Date},
+    provider: {type: String, enum: Provider},
+    providerUserId: {type: String},
+    providerImageUrl: {type: String},
 
 }, {timestamps: true});
 
