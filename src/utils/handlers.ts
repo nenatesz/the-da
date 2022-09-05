@@ -52,7 +52,7 @@ class Handler {
         let token = null;
         if (req && req.cookies)
         {
-            token = req.cookies['access-token'];
+            token = req.cookies['jwt'];
             console.log('token!', token)
         }
         return token;

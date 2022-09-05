@@ -132,7 +132,7 @@ passport.use(new JwtStrategy.Strategy(jwtOpts, async (token, done) => {
 const linkedinOpts: StrategyOptionWithRequest = {
     clientID: config.linkedInClientId,
     clientSecret: config.linkedInClientSecret,
-    callbackURL: 'http://localhost:5050/auth/linkedin/callback',
+    callbackURL: process.env.NODE_ENV === 'development' ? 'http://localhost:5050/auth/linkedin/callback' : 'https://clink-ng.herokuapp.com/auth/linkedin/callback',
     scope: ['r_emailaddress', 'r_liteprofile'],
     passReqToCallback: true
 }
@@ -142,6 +142,7 @@ passport.use(new LinkedInStrategy(linkedinOpts, (req: Request, accessToken, refr
         process.nextTick(() => {
             try {
                 console.log('accessToken', accessToken)
+                console.log('env', process.env.NODE_ENV)
                 if (!profile?.emails[0].value){
                     done(null, false, 'LinkedIn Account is not registered with email. Please sign in using other methods');
                 }
