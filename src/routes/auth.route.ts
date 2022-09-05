@@ -9,7 +9,7 @@ const authRouter = express.Router();
 authRouter.post('/login', authValidation.validateLogin(), authController.userLogin);
 authRouter.post('/register', authValidation.validateRegistration(), authController.userRegister);
 authRouter.put('/username', authController.usernameInput);
-authRouter.post('/biosetup', authController.isAuthUser, authValidation.validateBioSetup(), authController.bioSetup);
+authRouter.put('/biosetup', authController.isAuthUser, authValidation.validateBioSetup(), authController.bioSetup);
 authRouter.get('/linkedin', authController.linkedinAuth);
 authRouter.get("/linkedin/callback", authController.linkedinCallback);
 
