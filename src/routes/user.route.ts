@@ -5,6 +5,6 @@ import authValidation from '../validation/auth.validation';
 
 const userRouter = express.Router();
 // userRouter.get('/', authController.isAuthUser, authController.completeUserProfile, userController.getUsersProfile);
-userRouter.get('/', authController.isAuthUser, authController.isAdmin, userController.getUsersProfile);
+userRouter.get('/', authController.isAuthUser, userController.getUsersProfile);
 
 export default userRouter;
