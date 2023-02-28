@@ -21,26 +21,6 @@ app.use(cookieParser())
 app.use(cors());
 
 
-// app.use(session({
-//   secret: 'keyboard cat',
-//   resave: false,
-//   saveUninitialized: true,
-// }));
-// // app.use(passport.initialize());
-// // app.use(passport.session());
-// passport.serializeUser(function(user, cb) {
-//     process.nextTick(function() {
-//       return cb(null, user);
-//     });
-//   });
-  
-// passport.deserializeUser(function(user: Express.User, cb) {
-// process.nextTick(function() {
-//     return cb(null, user);
-// });
-// });
-// app.use(passport.session());
-
 app.use('/auth', authRouter);
 app.use('/users', userRouter);
 
