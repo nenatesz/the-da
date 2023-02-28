@@ -70,12 +70,6 @@ const linkedinAuth = (req: Request, res: Response, next: NextFunction ) => {
    return passport.authenticate('linkedin', {state: 'SOME STATE'})(req, res, next);
 }
 // LINKEDIN CALLBACK - The app is redirected here with an authentication code after successful authentication. 
-// const linkedinCallback = (req: Request, res: Response, next: NextFunction) => {
-//   passport.authenticate("linkedin", {
-//     successRedirect: "/users/",
-//     failureRedirect: "/auth/login",
-//   })(req, res, next)
-// };
 const linkedinCallback = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate("linkedin", { session: false}, (err, user, info) => {
     console.log('user', user)
@@ -85,9 +79,9 @@ const linkedinCallback = (req: Request, res: Response, next: NextFunction) => {
       // return res.redirect(404, '/auth/login')
     }
     if (!user?.username) {
-      // return handler.send(res, 'Input username', 400, 'error')
+      // redirect to the username page. remove placeholder when url to the username page is provided.
       return res.redirect(302, 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization');
-      // return res.json({data: 'input username'}).end()
+      
     }
     req.login(user, {session: false}, err => {
       if(err) {
@@ -97,7 +91,7 @@ const linkedinCallback = (req: Request, res: Response, next: NextFunction) => {
       const token = handler.generateToken({ email: user.email, role: user.role, username: user.username});
       console.log('cookie', token)
       res.cookie('jwt', token);
-      // res.set('x-authorization', "Bearer " + token)
+     
 
       res.redirect(301, '/users');
     })
