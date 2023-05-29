@@ -8,7 +8,6 @@ import JwtStrategy, { StrategyOptions } from 'passport-jwt';
 import ExtractJwt from 'passport-jwt';
 import UserModel, { IUserDocument } from '../models/user.model';
 import config from "../config";
-import { constants } from 'buffer';
 import handler from "./handlers";
 
 

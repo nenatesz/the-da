@@ -7,8 +7,7 @@ import config from './config'
 import Mongoose from './utils/mongoose';
 import authRouter from './routes/auth.route';
 import userRouter from './routes/user.route';
-import passport from 'passport';
-import session from 'express-session';
+
 
 
 const app = express();

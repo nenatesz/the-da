@@ -1,15 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import passport from 'passport';
-import jwt, { JwtPayload } from 'jsonwebtoken';
 import '../utils/configStrategy';
-import config from '../config';
 import UserModel, { IUserDocument, IUserModel } from '../models/user.model';
 import handler from '../utils/handlers';
-// import * as nanoid from 'nanoid';
-// import bcrypt from "bcrypt";
 // import nodemailer from 'nodemailer';
-// import dayjs from 'dayjs';
-
 
 declare global {
   namespace Express {
@@ -76,11 +70,10 @@ const linkedinCallback = (req: Request, res: Response, next: NextFunction) => {
     if (err || !user) {
       console.log('err authenticating user')
       return res.json({data: 'Error Authenticating User'}).end()
-      // return res.redirect(404, '/auth/login')
     }
     if (!user?.username) {
-      // redirect to the username page. remove placeholder when url to the username page is provided.
-      return res.redirect(302, 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization');
+      // redirect to the username page, for the user to add a username. remove placeholder when url to the username page is provided.
+      return res.redirect(302, 'http://localhost:8080/users/username');
       
     }
     req.login(user, {session: false}, err => {
@@ -89,11 +82,10 @@ const linkedinCallback = (req: Request, res: Response, next: NextFunction) => {
       }
       console.log('username', user.username)
       const token = handler.generateToken({ email: user.email, role: user.role, username: user.username});
-      console.log('cookie', token)
+      console.log('token', token)
       res.cookie('jwt', token);
      
-
-      res.redirect(301, '/users');
+      res.redirect(301, 'http://localhost:8080/users/');
     })
 
   })(req, res, next)
@@ -214,7 +206,6 @@ const completeUserProfile = async (req: Request, res: Response, next: NextFuncti
     next()
   } else {
     return handler.send(res, 'You have to complete your profile to view this page', 401, 'error');
-    // res.status(401).send({msg: 'You have to complete your profile to view this page'});
   }
 }
 
